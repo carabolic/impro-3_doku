@@ -1,4 +1,3 @@
-
 \documentclass[12pt]{amsart}
 \usepackage{geometry} % see geometry.pdf on how to lay out the page. There's lots.
 \usepackage[utf8]{inputenc}
@@ -21,7 +20,62 @@
 \maketitle
 \tableofcontents
 
-\section{}
-\subsection{}
+\section{Einleitung}
+
+\section{Evaluierung}
+\subsection{Vorüberlegungen}
+\subsubsection{Erster Wort-für-Wort Übersetzer}
+Der erste Wort-für-Wort Übersetzer benutzt ein gegebenes Wörterbuch für mögliche Übersetzungen. Bei mehrdeutigen Übersetzungsmöglichkeiten wird ein Bi-Gramm Modell benutzt um einen Kandidaten auszuwählen. Für jedes Bi-Gramm im Trainingskorpus wird die Häufigkeit ermittelt. Existiert das gesuchte Bi-Gramm im Trainingskorpus, so wird die Übersetzung des  Bi-Gramm mit der höchsten Häufigkeit gewählt. Existiert es hingegen nicht, so werden die Wörter einzeln übersetzt. Muss ein Wort einzeln übersetzt werden, so wird bei eindeutiger Übersetzung die Übersetzung aus dem Wörterbuch selbst gewählt. Gibt es mehrdeutige Übersetzungen für ein Wort, wird die Übersetzung mit dem höchsten Vorkommen aus dem Trainingskorpus gewählt.
+
+\subsubsection{IBM Model 1/2 Übersetzer}
+Der IBM Model 1 Übersetzer ist ein erweiterter Wort-für-Wort Übersetzer, der kein gegebenes Wörterbuch benötigt. Stattdessen wird aus einem Trainingskorpus das Wörterbuch erlernt. Modell 2 ergänzt zusätzlich Modell 1 um Berücksichtigung der Wortposition einzelner Wörter von Startsprache in die Zielsprache.
+
+\subsubsection{Pro und Contra}
+Beide Übersetzer sind stark vom Trainingskorpus abhängig, die Wahl der Übersetzung wird dadurch enorm bestimmt. Das IBM Modell 1/2 braucht sogar einen sehr großen Korpus zum erlernen der Übersetzungen.
+Beim einfachen Übersetzer hingegen muss das Wörterbuch nicht erlernt werden. Nur der IBM Modell 1/2 Übersetzer berücksichtigt die Neuordnung der Wörter: "klein ist das Haus $\rightarrow$ the house is small".
+Beide Übersetzer berücksichtigen nicht "1 zu n" Übersetzungen, wenn diese nicht im Wörterbuch vorkommen: "klitzeklein $\rightarrow$ very small“.
+Füllwörter können weder vernachlässigt: "das Haus ist klein $\rightarrow$ house is small“ , noch können sie
+hinzugefügt werden,was ggf. zu unerwünschten Übersetzungen führt: "das Haus ist klein $\rightarrow$ the house is just small“ .
+Die Übersetzer eignen sich beide für Echtzeitübersetzungen, z.B. Webfrontend, da sie keine aufwendiges Erkennen von Wortart und Aufgabe im Satz erkennen müssen.
+
+\subsection{Was ist zu erwarten}
+Wenn der zu übersetzende Text thematisch stark vom Lernkorpus abweicht oder der Korpus sehr kurz ist, kann es sein, das keine Übersetzung mit dem IBM Modell 1/2 gefunden wird, so dass der Wort-für-Wort Übersetzer im Vorteil ist. 
+Das Vorkommen einer Übersetzung wird durch den Korpus bestimmt; beide Übersetzer können also einen nicht erwarteten Übersetzungspartner wählen: "er $\rightarrow$ him“ anstatt "he“. Beide Übersetzer sind diesbezüglich gleich gut. 
+Sind viele Übersetzungen von Bi-Grammen des zu übersetzenden Textes bekannt, kann die Qualität der Übersetzung des Wort-für-Wort Übersetzers sehr erhöht werden: "hohes Gebäude“ $\rightarrow$ "high building“, anstatt einzeln "hoch“ $\rightarrow$ "high“ und "Gebäude “ $\rightarrow$ "house“.
+Neuordnungen von Wörtern in die Zielsprache können die Übersetzung flüssiger erscheinen lassen und verbessern somit die Qualität der Übersetzung des IBM Models 2. Allgemein sollte der Wort-für-Wort Übersetzer besser abschneiden, da die Vorteile eines Bi-Gramm Modells überwiegen.
+
+\subsection{Bewertung}
+Bei dem Vergleich der Qualität von Maschinen-Übersetzungen stellt sich Frage nach der Qualität und wie diese bestimmt werden kann. Eine Kontrolle durch den Menschen, z.B. eine Gruppe professioneller Übersetzer, ist oft zu kostspielig und zeitintensiv, gerade wenn mehrere verschiedene Maschinen-Übersetzer miteinander verglichen werden sollen. Um dies zu erleichtern, gibt es eine Vielzahl von Auswertungsprogrammen.Wir haben uns für einen international angenommenes Testverfahren entschlossen, das von IBM vorgestellte "BLEU“.
+
+\subsection{BLEU}
+BLEU (bilingual evaluation understudy) ist eine Methode für die Qualitätsmessung von Maschinen-Übersetzern. Dabei wird eine Übersetzung mit einer gegebenen, idealerweise von professionellen Übersetzern erstellte, Übersetzung verglichen. Die BLEU Methode liefert einen Wert von 0 bis 1 zurück, wobei 1 dem besten zu erreichendem Wert entspricht. Für den Werte werden alle modifizierten N-Gramme* (*jedes N-Gramm reduziert die Restwörter um genau diese N Wörter) der Zielübersetzung mit der Referenzübersetzung verglichen, genauer: sie werden gezählt und durch die Gesamtanzahl der jeweiligen N-Gramme geteilt. Die logarithmischen Werte der einzelnen N-Gramm Vergleiche werden dann, unterschiedlich gewichtet, addiert. Eine Multiplikation mit einem Malus-Faktor auf die Potenz des zuvor ermittelten Wertes bestraft zu kurze Übersetzungen.
+Beispiel für Uni-Gramm (ohne Gewicht und Malus,nicht logarithmisch):
+\begin{itemize}
+\item Zielübersetzung: "the the the the.“
+\item Referenzübersetzung: "the cat is on the mat.“
+\end{itemize}
+
+Der BLEU-Wert wird wie folgt berechnet
+\begin{equation*}
+BLEU = BP \times exp\left (\sum_{n=1}^N w_n \times \log \left ( p_n \right ) \right )
+\end{equation*}
+wobei $w_n$ der statistisch ermittelte Gewichtungsparameter ist und $BP$ der Malus für zu kurze Übersetzung. Weiterhin beschreibt $p_n$ Die \textit{Precision} der N-Gramme also für oben genannte Beispiel $p_n = \frac{2}{4}$.
+
+\subsection{Ergebnisse}
+Testdaten entsprechen weitestgehend den offiziellen "ACL WMT 2007“ Daten ("\&“ wurde durch "und“ ersetzt).
+\begin{table}[htdp]
+\caption{default}
+\begin{center}
+\begin{tabular}{|c|c|}
+\hline
+Übersetzer & BLEU-Wert \\\hline
+Google\footnote{Zahlen sind von uns ermittelt worden, da keine offiziellen Daten von Deutsch nach Englisch vorliegen.} & 0,4593 \\\hline
+Wort-für-Wort Übersetzer & 0,0373 \\\hline
+IBM Model 1 Übersetzer & 0,0504 \\\hline
+\end{tabular}
+\end{center}
+\label{BLEU-Werte}
+\end{table}%
+
 
 \end{document}
